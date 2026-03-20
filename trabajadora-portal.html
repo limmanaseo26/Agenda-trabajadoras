@@ -1,0 +1,1590 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <meta name="theme-color" content="#0d3b52" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="LÍMMAN" />
+  <title>LÍMMAN | Portal Trabajadora</title>
+  <script>
+    (function () {
+      if (location.protocol === 'http:' || location.protocol === 'https:') {
+        var l = document.createElement('link');
+        l.rel = 'manifest';
+        l.href = 'manifest.json';
+        document.head.appendChild(l);
+      }
+    })();
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:        #eef1f5;
+      --white:     #ffffff;
+      --card-shadow: 0 4px 32px rgba(13,59,82,0.10);
+      --navy:      #0d3b52;
+      --navy2:     #1a5c7a;
+      --accent:    #2a9d8f;
+      --btn-from:  #1a4a7a;
+      --btn-to:    #5b4fcf;
+      --input-bg:  #eaf0f6;
+      --border:    #d4dde6;
+      --muted:     #6b8a9a;
+      --text:      #0d3b52;
+      --green:     #2a9d5c;
+      --amber:     #e09f3e;
+      --red:       #d64040;
+      --radius:    18px;
+      --radius-sm: 12px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      height: 100%; background: var(--bg);
+      color: var(--text); font-family: 'Nunito', sans-serif;
+      overflow-x: hidden;
+    }
+
+    /* ── VIEWS ── */
+    .view { display: none; min-height: 100vh; flex-direction: column; }
+    .view.active { display: flex; }
+
+    /* ══════════════════════════════
+       LOGIN
+    ══════════════════════════════ */
+    #view-login {
+      align-items: center; justify-content: center;
+      padding: 32px 20px; background: var(--bg);
+      min-height: 100vh;
+    }
+    .login-wrap {
+      background: var(--white); border-radius: 24px;
+      box-shadow: var(--card-shadow);
+      padding: 40px 32px 36px;
+      width: 100%; max-width: 420px;
+    }
+    .login-logo {
+      display: flex; justify-content: center; margin-bottom: 24px;
+    }
+    .login-logo img { height: 64px; object-fit: contain; }
+    .login-title {
+      text-align: center; font-size: 1.75rem; font-weight: 800;
+      color: var(--navy); margin-bottom: 8px;
+    }
+    .login-sub {
+      text-align: center; font-size: 0.88rem; color: var(--muted);
+      line-height: 1.6; margin-bottom: 28px;
+    }
+    .field { margin-bottom: 16px; }
+    .field label {
+      display: block; font-size: 0.82rem; font-weight: 600;
+      color: var(--navy2); margin-bottom: 7px;
+    }
+    .field input {
+      width: 100%; background: var(--input-bg);
+      border: 1.5px solid transparent; border-radius: var(--radius-sm);
+      padding: 13px 16px; color: var(--text);
+      font-size: 0.95rem; font-family: 'Nunito', sans-serif;
+      outline: none; transition: border-color .2s, background .2s;
+    }
+    .field input:focus {
+      border-color: var(--accent); background: #fff;
+    }
+    .login-error {
+      background: #fef2f2; border: 1px solid #fca5a5;
+      color: var(--red); border-radius: var(--radius-sm);
+      padding: 10px 14px; font-size: 0.82rem;
+      margin-bottom: 14px; display: none; font-weight: 600;
+    }
+    .login-error.show { display: block; }
+    .btn-login {
+      width: 100%; padding: 14px;
+      background: linear-gradient(90deg, var(--btn-from), var(--btn-to));
+      color: #fff; border: none; border-radius: var(--radius-sm);
+      font-size: 1rem; font-weight: 700; cursor: pointer;
+      font-family: 'Nunito', sans-serif;
+      transition: filter .2s; letter-spacing: .02em;
+    }
+    .btn-login:hover { filter: brightness(1.1); }
+    .btn-login:disabled { opacity: .6; cursor: not-allowed; filter: none; }
+    .login-footer {
+      text-align: center; font-size: 0.75rem;
+      color: var(--muted); margin-top: 20px; line-height: 1.6;
+    }
+
+    /* ══════════════════════════════
+       APP SHELL
+    ══════════════════════════════ */
+    #view-app { background: var(--bg); }
+
+    .topbar {
+      background: var(--white);
+      box-shadow: 0 2px 12px rgba(13,59,82,0.07);
+      padding: 16px 20px 14px;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 100;
+    }
+    .topbar-left { display: flex; align-items: center; gap: 12px; }
+    .topbar-logo { height: 32px; object-fit: contain; }
+    .topbar-divider {
+      width: 1px; height: 28px; background: var(--border);
+    }
+    .topbar-name  { font-size: 0.95rem; font-weight: 700; color: var(--navy); }
+    .topbar-date  { font-size: 0.72rem; color: var(--muted); margin-top: 1px; }
+    .logout-btn {
+      background: var(--input-bg); border: 1.5px solid var(--border);
+      color: var(--muted); border-radius: 50px; padding: 7px 16px;
+      font-size: 0.75rem; font-weight: 600; cursor: pointer;
+      font-family: 'Nunito', sans-serif; transition: all .2s;
+      position: relative; z-index: 2; pointer-events: auto;
+    }
+    .logout-btn:hover { color: var(--red); border-color: var(--red); background: #fef2f2; }
+
+    /* TABS */
+    .tabs {
+      display: flex; gap: 6px; padding: 16px 20px 8px;
+      overflow-x: auto; scrollbar-width: none; background: var(--bg);
+    }
+    .tabs::-webkit-scrollbar { display: none; }
+    .tab {
+      flex-shrink: 0; padding: 8px 20px; border-radius: 50px;
+      border: 1.5px solid var(--border); background: var(--white);
+      color: var(--muted); font-size: 0.82rem; font-weight: 600;
+      cursor: pointer; transition: all .2s; font-family: 'Nunito', sans-serif;
+    }
+    .tab.active {
+      background: linear-gradient(90deg, var(--btn-from), var(--btn-to));
+      color: #fff; border-color: transparent;
+    }
+    .fijo-hint {
+      font-size: 0.78rem; color: var(--muted); padding: 0 20px 10px;
+      font-weight: 600; line-height: 1.4;
+    }
+
+    /* SCROLL */
+    .scroll-area { flex: 1; overflow-y: auto; padding: 12px 16px 100px; }
+
+    /* CARDS */
+    .card {
+      background: var(--white); border-radius: var(--radius);
+      box-shadow: 0 2px 12px rgba(13,59,82,0.07);
+      padding: 18px; margin-bottom: 12px;
+      border: 1.5px solid transparent;
+      transition: box-shadow .2s, border-color .2s;
+    }
+    .card:hover { box-shadow: var(--card-shadow); border-color: var(--border); }
+
+    /* SERVICE CARD */
+    .svc-header {
+      display: flex; justify-content: space-between;
+      align-items: flex-start; margin-bottom: 10px;
+    }
+    .svc-time { font-size: 1.6rem; font-weight: 800; color: var(--navy); line-height: 1; }
+    .svc-date { font-size: 0.72rem; color: var(--muted); margin-top: 3px; font-weight: 600; }
+
+    .badge {
+      font-size: 0.7rem; padding: 4px 12px; border-radius: 50px;
+      font-weight: 700; letter-spacing: .03em;
+    }
+    .badge-pending  { background: #fef9ec; color: #b45309; border: 1.5px solid #fcd34d; }
+    .badge-confirmed{ background: #f0fdf4; color: #166534; border: 1.5px solid #86efac; }
+    .badge-ongoing  { background: #eff6ff; color: #1e40af; border: 1.5px solid #93c5fd; }
+    .badge-done     { background: #f8fafc; color: var(--muted); border: 1.5px solid var(--border); }
+
+    .svc-client { font-size: 1rem; font-weight: 700; color: var(--navy); margin-bottom: 3px; }
+    .svc-plan   { font-size: 0.8rem; color: var(--muted); margin-bottom: 12px; font-weight: 600; }
+    .svc-prog   { font-size: 0.82rem; color: var(--navy); margin-bottom: 10px; font-weight: 600; }
+    .svc-cliente-meta { font-size: 0.76rem; color: var(--muted); margin-bottom: 8px; line-height: 1.35; font-weight: 600; }
+
+    .svc-addr {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 0.82rem; color: var(--navy2);
+      background: var(--input-bg); border-radius: 10px;
+      padding: 10px 12px; margin-bottom: 12px;
+      cursor: pointer; transition: background .2s;
+      border: 1.5px solid var(--border);
+      text-decoration: none;
+    }
+    .svc-addr:hover { background: #dceefb; border-color: var(--accent); }
+    .svc-addr svg   { flex-shrink: 0; color: var(--accent); }
+    .svc-addr span  { flex: 1; font-weight: 600; }
+    .maps-label     { font-size: 0.7rem; color: var(--accent); font-weight: 700; }
+
+    /* TIMESTAMPS */
+    .timestamps { display: flex; gap: 8px; margin-bottom: 12px; }
+    .ts-chip {
+      flex: 1; background: var(--input-bg); border-radius: 10px;
+      padding: 9px 12px; border: 1.5px solid var(--border);
+    }
+    .ts-label { font-size: 0.65rem; color: var(--muted); text-transform: uppercase; letter-spacing: .07em; font-weight: 700; }
+    .ts-value { font-size: 0.9rem; font-weight: 700; margin-top: 2px; color: var(--navy); }
+
+    /* BUTTONS */
+    .svc-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn {
+      flex: 1; min-width: 110px; padding: 11px 14px; border-radius: 10px;
+      border: none; font-size: 0.82rem; font-weight: 700; cursor: pointer;
+      font-family: 'Nunito', sans-serif; transition: all .2s;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .btn-primary {
+      background: linear-gradient(90deg, var(--btn-from), var(--btn-to));
+      color: #fff;
+    }
+    .btn-primary:hover { filter: brightness(1.1); }
+    .btn-green  { background: #f0fdf4; color: #166534; border: 1.5px solid #86efac; }
+    .btn-green:hover  { background: #dcfce7; }
+    .btn-red    { background: #fef2f2; color: var(--red); border: 1.5px solid #fca5a5; }
+    .btn-red:hover    { background: #fee2e2; }
+    .btn-ghost  { background: var(--input-bg); color: var(--muted); border: 1.5px solid var(--border); }
+    .btn-ghost:hover  { color: var(--navy); border-color: var(--navy2); background: #fff; }
+    .btn:disabled     { opacity: .45; cursor: not-allowed; filter: none; }
+    .btn-full         { width: 100%; min-width: unset; }
+
+    /* SECTION TITLE */
+    .section-title {
+      font-size: 0.7rem; text-transform: uppercase; letter-spacing: .1em;
+      color: var(--muted); margin: 20px 0 10px; font-weight: 700;
+    }
+
+    /* EMPTY STATE */
+    .empty { text-align: center; padding: 60px 20px; color: var(--muted); }
+    .empty-icon { font-size: 2.5rem; margin-bottom: 12px; opacity: .5; }
+    .empty-text { font-size: 0.9rem; line-height: 1.6; font-weight: 600; }
+
+    /* MODULES */
+    .modules-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .module-card {
+      background: var(--white); border: 1.5px solid var(--border);
+      border-radius: var(--radius); padding: 22px 16px;
+      text-align: center; cursor: pointer; transition: all .2s;
+      box-shadow: 0 2px 8px rgba(13,59,82,0.05);
+    }
+    .module-card.active-mod:hover {
+      border-color: var(--accent); box-shadow: 0 4px 20px rgba(42,157,143,0.15);
+      transform: translateY(-2px);
+    }
+    .module-card.coming { opacity: .5; cursor: default; }
+    .mod-icon  { font-size: 1.9rem; margin-bottom: 8px; }
+    .mod-label { font-size: 0.85rem; font-weight: 700; color: var(--navy); }
+    .mod-sub   { font-size: 0.72rem; color: var(--muted); margin-top: 3px; font-weight: 600; }
+    .mod-pill  {
+      display: inline-block; font-size: 0.62rem; padding: 2px 10px;
+      border-radius: 50px; margin-top: 8px;
+      background: var(--input-bg); color: var(--muted);
+      border: 1.5px solid var(--border); font-weight: 700;
+    }
+
+    /* PROFILE */
+    .profile-card {
+      background: var(--white); border-radius: var(--radius);
+      box-shadow: var(--card-shadow); padding: 28px 20px; margin-bottom: 16px; text-align: center;
+    }
+    .avatar {
+      width: 80px; height: 80px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--btn-from), var(--btn-to));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2rem; font-weight: 800; margin: 0 auto 12px; color: #fff;
+      box-shadow: 0 4px 20px rgba(91,79,207,0.3);
+    }
+    .profile-name  { font-size: 1.3rem; font-weight: 800; color: var(--navy); }
+    .profile-email { font-size: 0.8rem; color: var(--muted); margin-top: 4px; font-weight: 600; }
+    .stats-row     { display: flex; gap: 10px; margin-top: 20px; }
+    .stat-box {
+      flex: 1; background: var(--input-bg); border-radius: 12px;
+      padding: 14px; border: 1.5px solid var(--border); text-align: center;
+    }
+    .stat-num { font-size: 1.6rem; font-weight: 800; }
+    .stat-lbl { font-size: 0.7rem; color: var(--muted); margin-top: 2px; font-weight: 700; }
+
+    /* CONFIRM BANNER */
+    .confirm-banner {
+      background: #fffbeb; border: 1.5px solid #fcd34d;
+      border-radius: 14px; padding: 14px 16px;
+      display: flex; align-items: center; gap: 12px; margin-bottom: 14px;
+    }
+    .confirm-banner-icon { font-size: 1.4rem; flex-shrink: 0; }
+    .confirm-banner-text { flex: 1; font-size: 0.82rem; line-height: 1.5; font-weight: 600; color: #92400e; }
+
+    /* BOTTOM NAV */
+    .bottom-nav {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: var(--white);
+      border-top: 1.5px solid var(--border);
+      box-shadow: 0 -4px 20px rgba(13,59,82,0.08);
+      display: flex; padding: 8px 0 env(safe-area-inset-bottom);
+      z-index: 50;
+    }
+    .nav-item {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; gap: 4px; padding: 8px 4px;
+      cursor: pointer; color: var(--muted); font-size: 0.65rem;
+      font-weight: 700; transition: color .2s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .nav-item svg { width: 22px; height: 22px; }
+    .nav-item.active { color: var(--navy); }
+    .nav-item.active svg { stroke: url(#navGrad); }
+
+    /* TOAST */
+    #toast {
+      position: fixed; bottom: 90px; left: 50%;
+      transform: translateX(-50%) translateY(12px);
+      background: var(--navy); color: #fff;
+      padding: 12px 22px; border-radius: 50px; font-size: 0.83rem;
+      font-weight: 700; z-index: 999; white-space: nowrap;
+      opacity: 0; transition: all .3s; pointer-events: none;
+      box-shadow: 0 4px 20px rgba(13,59,82,0.25);
+    }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* MODAL */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(13,59,82,0.35);
+      z-index: 100; display: none; align-items: flex-end; justify-content: center;
+      backdrop-filter: blur(4px);
+    }
+    .modal-overlay.show { display: flex; }
+    .modal-sheet {
+      background: var(--white); border-radius: 24px 24px 0 0;
+      padding: 28px 24px 40px; width: 100%; max-width: 480px;
+      animation: slideUp .3s ease;
+      box-shadow: 0 -8px 40px rgba(13,59,82,0.15);
+    }
+    @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+    .modal-handle {
+      width: 40px; height: 4px; background: var(--border);
+      border-radius: 2px; margin: 0 auto 20px;
+    }
+    .modal-title { font-size: 1.2rem; font-weight: 800; color: var(--navy); margin-bottom: 6px; }
+    .modal-sub   { font-size: 0.83rem; color: var(--muted); margin-bottom: 20px; font-weight: 600; }
+
+    /* SPINNER */
+    .spinner {
+      width: 20px; height: 20px; border: 2.5px solid rgba(255,255,255,.3);
+      border-top-color: #fff; border-radius: 50%; animation: spin .6s linear infinite;
+      display: inline-block;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* GPS */
+    .gps-ok   { color: var(--green); font-size: 0.78rem; display: flex; align-items: center; gap: 6px; font-weight: 700; }
+    .gps-fail { color: var(--red);   font-size: 0.78rem; display: flex; align-items: center; gap: 6px; font-weight: 700; }
+    .gps-dot  { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+  </style>
+</head>
+<body>
+
+<!-- SVG gradient for nav icons -->
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <linearGradient id="navGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#1a4a7a"/>
+      <stop offset="100%" stop-color="#5b4fcf"/>
+    </linearGradient>
+  </defs>
+</svg>
+
+<!-- ══════════════════════════════════════ -->
+<!--  CARGA SESIÓN (evita flash de login al refrescar) -->
+<!-- ══════════════════════════════════════ -->
+<div id="view-boot" class="view active" style="align-items:center;justify-content:center;background:var(--bg)">
+  <div style="text-align:center;color:var(--muted);font-weight:700;font-size:0.95rem">
+    <div class="spinner" style="border-top-color:var(--accent);border-color:var(--border);margin:0 auto 14px"></div>
+    Cargando sesión…
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════ -->
+<!--  LOGIN                                 -->
+<!-- ══════════════════════════════════════ -->
+<div id="view-login" class="view">
+  <div class="login-wrap">
+    <div class="login-logo">
+      <img id="login-logo-img" src="" alt="LÍMMAN" />
+    </div>
+    <div class="login-title">Acceso de usuarios</div>
+    <div class="login-sub">Inicia sesión con tu correo y contraseña para<br>gestionar tus servicios con LÍMMAN.</div>
+    <div id="login-error" class="login-error">Correo o contraseña incorrectos.</div>
+    <div class="field">
+      <label>Correo electrónico</label>
+      <input id="inp-email" type="email" placeholder="tu@correo.com" autocomplete="email" />
+    </div>
+    <div class="field">
+      <label>Contraseña</label>
+      <input id="inp-pass" type="password" placeholder="••••••••" autocomplete="current-password" />
+    </div>
+    <button class="btn-login" id="btn-login" onclick="doLogin()">Iniciar sesión</button>
+    <div class="login-footer">
+      La conexión se realiza a través de Supabase.<br>
+      Solicita tus credenciales al equipo de LÍMMAN.
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════ -->
+<!--  APP                                   -->
+<!-- ══════════════════════════════════════ -->
+<div id="view-app" class="view">
+
+  <div class="topbar">
+    <div class="topbar-left">
+      <img id="topbar-logo-img" src="" alt="LÍMMAN" class="topbar-logo" />
+      <div class="topbar-divider"></div>
+      <div>
+        <div class="topbar-name" id="topbar-name">…</div>
+        <div class="topbar-date" id="topbar-date"></div>
+      </div>
+    </div>
+    <button type="button" class="logout-btn" id="btn-logout" onclick="doLogout()">Salir</button>
+  </div>
+
+  <div class="tabs" id="tabs-bar">
+    <button class="tab active" onclick="showTab('hoy',this)">Hoy</button>
+    <button class="tab" onclick="showTab('manana',this)">Mañana</button>
+    <button class="tab" onclick="showTab('semana',this)">Esta semana</button>
+  </div>
+
+  <div class="scroll-area" id="main-content">
+    <div class="empty"><div class="spinner" style="border-top-color:var(--accent);border-color:var(--border)"></div></div>
+  </div>
+
+  <nav class="bottom-nav">
+    <div class="nav-item active" id="nav-agenda" onclick="switchSection('agenda',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="3" y="4" width="18" height="18" rx="3"/>
+        <line x1="16" y1="2" x2="16" y2="6"/>
+        <line x1="8" y1="2" x2="8" y2="6"/>
+        <line x1="3" y1="10" x2="21" y2="10"/>
+      </svg>
+      Agenda
+    </div>
+    <div class="nav-item" id="nav-perfil" onclick="switchSection('perfil',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="8" r="4"/>
+        <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+      </svg>
+      Mi Perfil
+    </div>
+    <div class="nav-item" id="nav-modulos" onclick="switchSection('modulos',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="3" y="3" width="7" height="7" rx="2"/>
+        <rect x="14" y="3" width="7" height="7" rx="2"/>
+        <rect x="3" y="14" width="7" height="7" rx="2"/>
+        <rect x="14" y="14" width="7" height="7" rx="2"/>
+      </svg>
+      Módulos
+    </div>
+  </nav>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal-svc">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="modal-title"></div>
+    <div class="modal-sub"   id="modal-sub"></div>
+    <div id="modal-body"></div>
+    <button class="btn btn-ghost btn-full" style="margin-top:14px" onclick="closeModal()">Cerrar</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ─────────────────────────────────────────────────
+   ⚙️  CONFIGURACIÓN — Proyecto Supabase LÍMMAN
+───────────────────────────────────────────────── */
+const SUPABASE_URL = 'https://lbeuwbyltygpdaiitcun.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_7EV-x2dE-s5Duwc3Fy1-qQ_ZjKhs42M';
+
+// Nombres de tablas (esquema real en Supabase)
+const T_TRABAJADORAS = 'trabajadoras';
+const T_SERVICIOS    = 'servicios';
+const T_CLIENTES       = 'clientes';
+const T_REGISTRO_HORAS = 'registro_horas';
+
+/* Modo despliegue: RLS desactivado en Supabase. El aislamiento es solo en este cliente:
+   - Resolver la fila en trabajadoras por email de sesión (initApp).
+   - Toda lectura/escritura sobre datos de trabajadora debe filtrar por workerIdSesion()
+     (columna C_TRABAJADORA_ID en servicios). No añadir consultas sin ese filtro. */
+
+// Columnas servicios (tras normalizarServicio: fecha_hora, nombre_cliente, cliente_*, hora_prog_*, plan_display, confirmada_portal)
+// client_id → FK public.clientes (nombre en clientes.name, etc.)
+const C_CLIENT_ID      = 'client_id';
+const C_FECHA          = 'fecha_hora';
+const C_TRABAJADORA_ID = 'worker_id';
+const C_DIRECCION      = 'direccion';
+const C_NOMBRE_CLI     = 'nombre_cliente';
+const C_PLAN           = 'plan_display';
+const C_CONFIRMADA     = 'confirmada_portal';
+const C_STATUS         = 'status';
+/* timestamptz en Supabase: fecha + hora en un solo campo (ISO con toISOString()). */
+const C_REP_INICIO     = 'fecha_hora_reporte_inicio';
+const C_REP_FIN        = 'fecha_hora_reporte_finalizacion';
+
+// Columnas trabajadoras
+const C_TRAB_ID      = 'id';
+const C_TRAB_NOMBRE  = 'name';
+const C_TRAB_EMAIL   = 'email';
+/** 'Fijo' | 'Puesto fijo' | 'Rotativo' | … — cliente base y registro_horas para puesto fijo. */
+const C_TRAB_TIPO    = 'tipo';
+
+/** Select PostgREST: servicios + cliente vinculado por client_id (requiere lectura RLS en clientes). */
+const SELECT_SERVICIOS_CLIENTE = '*,clientes(id,name,type,segment,phone,email,estado,nit)';
+
+/** id de trabajadoras vinculado al correo con el que inició sesión (único origen para filtrar servicios). */
+function workerIdSesion() {
+  return trabajadoraRow ? trabajadoraRow[C_TRAB_ID] : null;
+}
+
+/** Cliente cuyo worker_id es esta trabajadora (contrato fijo). Requiere SELECT en clientes (RLS). */
+async function loadClienteBase() {
+  clienteBaseId = null;
+  horasClienteBase = null;
+  if (!trabajadoraRow) return;
+  var wid = workerIdSesion();
+  if (wid == null) return;
+  var w = coercerIdServicio(wid);
+  var r = await db.from(T_CLIENTES).select('id,horas_semanales_contratadas').eq('worker_id', w).order('id', { ascending: true }).limit(1);
+  if (r.error || !r.data || !r.data.length) return;
+  clienteBaseId = r.data[0].id;
+  horasClienteBase = r.data[0].horas_semanales_contratadas;
+}
+
+function esTrabajadoraFija() {
+  if (!trabajadoraRow) return false;
+  var t = trabajadoraRow[C_TRAB_TIPO];
+  if (t == null || t === '') return false;
+  var n = String(t).trim().toLowerCase();
+  return n === 'fijo' || n === 'fija' || n === 'puesto fijo';
+}
+
+/** Misma condición: puesto fijo / fija → registro_horas en entrada y salida. */
+function esPuestoFijo() {
+  return esTrabajadoraFija();
+}
+
+/** fechaStr YYYY-MM-DD; mediodía local evita desfases TZ. 40 h → lun–vie; 44 h → lun–sáb. */
+function diaLaboralValidoParaHoras(fechaStr, horas) {
+  if (!fechaStr) return false;
+  var h = horas == null ? NaN : Number(horas);
+  if (h === 40) {
+    var d = new Date(fechaStr + 'T12:00:00');
+    var dow = d.getDay();
+    return dow >= 1 && dow <= 5;
+  }
+  if (h === 44) {
+    var d2 = new Date(fechaStr + 'T12:00:00');
+    var dow2 = d2.getDay();
+    return dow2 >= 1 && dow2 <= 6;
+  }
+  return true;
+}
+
+/** Oculta en agenda los servicios del cliente base fuera de su calendario laboral (40 o 44 h). */
+function aplicarReglaFijoBase(servicios) {
+  if (!esTrabajadoraFija() || clienteBaseId == null) return servicios;
+  var h = horasClienteBase == null ? NaN : Number(horasClienteBase);
+  if (h !== 40 && h !== 44) return servicios;
+  var bid = coercerIdServicio(clienteBaseId);
+  return servicios.filter(function (s) {
+    var cid = s.client_id == null ? null : coercerIdServicio(s.client_id);
+    if (cid !== bid) return true;
+    return diaLaboralValidoParaHoras(s.date, h);
+  });
+}
+
+/** Enteros para .eq en PostgREST (evita 0 filas por int vs string). */
+function coercerIdServicio(id) {
+  if (id === null || id === undefined) return id;
+  var s = String(id);
+  return /^\d+$/.test(s) ? parseInt(s, 10) : id;
+}
+
+/** UPDATE en servicios siempre acotado a esta trabajadora (id + worker_id). .select('*') devuelve la fila ya persistida en Supabase (incl. status). */
+function serviciosPatchOwn(wid, servicioId, updates) {
+  var sid = coercerIdServicio(servicioId);
+  var w = coercerIdServicio(wid);
+  return db.from(T_SERVICIOS).update(updates).eq('id', sid).eq(C_TRABAJADORA_ID, w).select('*');
+}
+
+/** YYYY-MM-DD desde fila servicio (columna date). */
+function fechaServicioStr(svc) {
+  if (!svc || svc.date == null) return null;
+  var d = String(svc.date).trim();
+  return d.length >= 10 ? d.substring(0, 10) : d;
+}
+
+/** Hora local HH:MM:SS para columnas time en registro_horas. */
+function horaLocalHHMMSS(ahora) {
+  var d = ahora instanceof Date ? ahora : new Date(ahora);
+  return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0') + ':' + String(d.getSeconds()).padStart(2, '0');
+}
+
+function horasLaboradasEntreStrings(horaEnt, horaSal) {
+  if (horaEnt == null || horaSal == null || horaEnt === '' || horaSal === '') return null;
+  function seg(t) {
+    var p = String(t).trim().split(':');
+    var h = parseInt(p[0], 10) || 0;
+    var m = parseInt(p[1], 10) || 0;
+    var s = parseInt(p[2], 10) || 0;
+    return h * 3600 + m * 60 + s;
+  }
+  var a = seg(horaEnt);
+  var b = seg(horaSal);
+  var diff = b - a;
+  if (diff < 0) diff += 24 * 3600;
+  return Math.round((diff / 3600) * 100) / 100;
+}
+
+/** Puesto fijo: una fila por worker_id + fecha. */
+async function upsertRegistroHorasEntrada(wid, fechaStr, horaEntradaStr) {
+  var w = coercerIdServicio(wid);
+  var q = await db.from(T_REGISTRO_HORAS).select('id').eq('worker_id', w).eq('fecha', fechaStr).limit(1);
+  if (q.error) return q;
+  if (q.data && q.data.length) {
+    return await db.from(T_REGISTRO_HORAS).update({ hora_entrada: horaEntradaStr }).eq('id', q.data[0].id).select();
+  }
+  return await db.from(T_REGISTRO_HORAS).insert({ worker_id: w, fecha: fechaStr, hora_entrada: horaEntradaStr }).select();
+}
+
+async function upsertRegistroHorasSalida(wid, fechaStr, horaSalidaStr) {
+  var w = coercerIdServicio(wid);
+  var q = await db.from(T_REGISTRO_HORAS).select('id,hora_entrada').eq('worker_id', w).eq('fecha', fechaStr).limit(1);
+  if (q.error) return q;
+  var horasLab = null;
+  if (q.data && q.data.length && q.data[0].hora_entrada)
+    horasLab = horasLaboradasEntreStrings(q.data[0].hora_entrada, horaSalidaStr);
+  if (q.data && q.data.length) {
+    return await db.from(T_REGISTRO_HORAS).update({ hora_salida: horaSalidaStr, horas_laboradas: horasLab }).eq('id', q.data[0].id).select();
+  }
+  return await db.from(T_REGISTRO_HORAS).insert({ worker_id: w, fecha: fechaStr, hora_salida: horaSalidaStr, horas_laboradas: horasLab }).select();
+}
+
+/**
+ * Escribe registro_horas para puesto fijo antes de actualizar servicios.
+ * Si falla, no se llama a servicios (el registro oficial es registro_horas).
+ */
+async function registrarHorasPuestoFijoEntrada(wid, svc, ahoraDate) {
+  var fechaStr = fechaServicioStr(svc);
+  if (!fechaStr) return { error: { message: 'El servicio no tiene fecha.' } };
+  var h = horaLocalHHMMSS(ahoraDate);
+  var r = await upsertRegistroHorasEntrada(wid, fechaStr, h);
+  return r;
+}
+
+async function registrarHorasPuestoFijoSalida(wid, svc, ahoraDate) {
+  var fechaStr = fechaServicioStr(svc);
+  if (!fechaStr) return { error: { message: 'El servicio no tiene fecha.' } };
+  var h = horaLocalHHMMSS(ahoraDate);
+  var r = await upsertRegistroHorasSalida(wid, fechaStr, h);
+  return r;
+}
+
+function toastPatchSinFilas(ctx) {
+  toast('❌ No se guardó en Supabase (0 filas). Revisa que exista el servicio y que worker_id sea el de tu sesión. ' + (ctx || ''));
+}
+
+/** Misma fila aunque id venga como string o number desde onclick / PostgREST. */
+function encontrarServicioLocal(id) {
+  return allServicios.find(function (s) { return s.id == id || String(s.id) === String(id); });
+}
+
+/** Formato HH:MM desde columnas time / end_time (Postgres time o string). */
+function fmtHoraProg(val) {
+  if (val == null || val === '') return '';
+  var t = String(val).trim();
+  var m = t.match(/^(\d{1,2}):(\d{2})(?::\d{2})?/);
+  if (m) return String(parseInt(m[1], 10)).padStart(2, '0') + ':' + String(parseInt(m[2], 10)).padStart(2, '0');
+  return t;
+}
+
+function normalizarServicio(s) {
+  const t = (s.time || '09:00').trim();
+  const timePart = t.length === 5 ? t + ':00' : (t.length >= 8 ? t : t + ':00');
+  const d = s.date;
+  const fecha_hora = d ? `${d}T${timePart}` : null;
+  var cli = s.clientes;
+  if (Array.isArray(cli)) cli = cli.length ? cli[0] : null;
+  if (cli && typeof cli !== 'object') cli = null;
+  var nombre_cliente = '';
+  if (cli && cli.name) nombre_cliente = String(cli.name).trim();
+  else if (cli && cli.nombre) nombre_cliente = String(cli.nombre).trim();
+  if (!nombre_cliente && s.nombre_cliente) nombre_cliente = String(s.nombre_cliente).trim();
+  if (!nombre_cliente && s.cliente_nombre) nombre_cliente = String(s.cliente_nombre).trim();
+  var cliente_phone = (cli && cli.phone) ? String(cli.phone).trim() : '';
+  var cliente_email = (cli && cli.email) ? String(cli.email).trim() : '';
+  var cliente_type = (cli && cli.type) ? String(cli.type).trim() : '';
+  var cliente_estado = (cli && cli.estado) ? String(cli.estado).trim() : '';
+  var cliente_nit = (cli && cli.nit) ? String(cli.nit).trim() : '';
+  var cliente_segment = (cli && cli.segment) ? String(cli.segment).trim() : '';
+  const plan_display = s.plan_contratado_id ? ('Plan #' + s.plan_contratado_id) : '';
+  const confirmada_portal = s[C_STATUS] === 'Confirmado';
+  const hora_prog_inicio = fmtHoraProg(s.time);
+  const hora_prog_fin = fmtHoraProg(s.end_time);
+  return {
+    ...s,
+    fecha_hora,
+    nombre_cliente,
+    cliente_phone,
+    cliente_email,
+    cliente_type,
+    cliente_estado,
+    cliente_nit,
+    cliente_segment,
+    plan_display,
+    confirmada_portal,
+    hora_prog_inicio,
+    hora_prog_fin,
+  };
+}
+
+const GPS_RADIO_M = 300;
+
+/* ── LOGO EN BASE64 (embebido) ── */
+const LOGO_B64 = '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';
+const LOGO_SRC = 'data:image/png;base64,' + LOGO_B64;
+
+document.getElementById('login-logo-img').src  = LOGO_SRC;
+document.getElementById('topbar-logo-img').src = LOGO_SRC;
+
+/* ── SUPABASE ── */
+const { createClient } = supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_KEY, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: false,
+    storage: localStorage,
+  },
+});
+
+/* ── ESTADO ── */
+let currentUser    = null;
+let trabajadoraRow = null;
+let currentSection = 'agenda';
+let currentTab     = 'hoy';
+let allServicios   = [];
+/** Cliente base: clientes.worker_id = trabajadora id (contrato fijo). */
+let clienteBaseId      = null;
+let horasClienteBase   = null;
+let arranqueAuthResuelto = false;
+let primCargaPromise = null;
+let initAppPromise   = null;
+let conectandoWatchdog = null;
+let cancelarInitCarga  = false;
+
+function limpiarSesionLocalSupabase() {
+  try {
+    var ref = 'lbeuwbyltygpdaiitcun';
+    for (var i = localStorage.length - 1; i >= 0; i--) {
+      var k = localStorage.key(i);
+      if (k && k.indexOf('sb-' + ref) === 0) localStorage.removeItem(k);
+    }
+  } catch (e) {}
+}
+
+function limpiarWatchdogConectando() {
+  if (conectandoWatchdog) {
+    clearTimeout(conectandoWatchdog);
+    conectandoWatchdog = null;
+  }
+}
+
+function conTimeout(promise, ms) {
+  return Promise.race([
+    promise,
+    new Promise(function (_, rej) {
+      setTimeout(function () { rej(new Error('timeout')); }, ms);
+    })
+  ]);
+}
+
+async function primeraCargaAuth(session) {
+  if (arranqueAuthResuelto) return;
+  if (primCargaPromise) return await primCargaPromise;
+  primCargaPromise = (async function () {
+    setTopbarDate();
+    try {
+      if (session && session.user) {
+        await initApp(session.user);
+        if (!trabajadoraRow) showView('login');
+      } else {
+        showView('login');
+      }
+    } catch (err) {
+      showView('login');
+    } finally {
+      arranqueAuthResuelto = true;
+      primCargaPromise = null;
+    }
+  })();
+  return await primCargaPromise;
+}
+
+/* ── SESIÓN: primer evento suele ser INITIAL_SESSION; en algunos entornos llega SIGNED_IN primero ── */
+db.auth.onAuthStateChange(async function (event, session) {
+  if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN') {
+    if (!arranqueAuthResuelto) {
+      await primeraCargaAuth(session);
+      return;
+    }
+    if (session && session.user) {
+      const appActiva = document.getElementById('view-app') && document.getElementById('view-app').classList.contains('active');
+      if (currentUser && currentUser.id === session.user.id && trabajadoraRow && appActiva) {
+        aplicarNombreTopbar(session.user);
+        return;
+      }
+      try {
+        await initApp(session.user);
+      } catch (err) {
+        showView('login');
+      }
+    }
+    return;
+  }
+  if (event === 'SIGNED_OUT') {
+    arranqueAuthResuelto = false;
+    currentUser = null;
+    trabajadoraRow = null;
+    allServicios = [];
+    showView('login');
+  }
+});
+
+setTimeout(async function () {
+  if (arranqueAuthResuelto) return;
+  try {
+    const { data: { session } } = await db.auth.getSession();
+    if (session) await primeraCargaAuth(session);
+    else {
+      showView('login');
+      arranqueAuthResuelto = true;
+    }
+  } catch (err) {
+    showView('login');
+    arranqueAuthResuelto = true;
+  }
+}, 2000);
+
+setTimeout(function () {
+  var vb = document.getElementById('view-boot');
+  if (!vb || !vb.classList.contains('active')) return;
+  arranqueAuthResuelto = true;
+  setTopbarDate();
+  showView('login');
+}, 6000);
+
+/* ─────────────────────────────────────────────────
+   LOGIN / LOGOUT
+───────────────────────────────────────────────── */
+function resetLoginButton() {
+  const btn = document.getElementById('btn-login');
+  if (btn) { btn.innerHTML = 'Iniciar sesión'; btn.disabled = false; }
+}
+
+function aplicarNombreTopbar(user) {
+  var el = document.getElementById('topbar-name');
+  if (!el || !user) return;
+  var raw = (trabajadoraRow && trabajadoraRow[C_TRAB_NOMBRE]) ? trabajadoraRow[C_TRAB_NOMBRE] : (user.email || '');
+  el.textContent = '👋 Hola, ' + String(raw).split(' ')[0];
+}
+
+function mensajeErrorAuth(error) {
+  if (!error) return 'No se pudo iniciar sesión.';
+  const m = (error.message || '').toLowerCase();
+  if (m.includes('email not confirmed') || m.includes('not confirmed'))
+    return 'Confirma tu correo antes de entrar: abre el enlace del email de verificación, o en Supabase ve a Authentication → Providers → Email y desactiva «Confirm email» (solo para pruebas).';
+  if (m.includes('invalid login') || m.includes('invalid credentials'))
+    return 'Correo o contraseña incorrectos. Si acabas de crear el usuario, revisa que la contraseña sea la del panel y el correo idéntico (sin espacios).';
+  if (m.includes('too many requests') || m.includes('rate limit'))
+    return 'Demasiados intentos. Espera unos minutos e inténtalo de nuevo.';
+  return error.message || 'No se pudo iniciar sesión.';
+}
+
+async function doLogin() {
+  const emailRaw = document.getElementById('inp-email').value.trim();
+  const email    = emailRaw.toLowerCase();
+  const pass     = document.getElementById('inp-pass').value;
+  const btn      = document.getElementById('btn-login');
+  const errEl    = document.getElementById('login-error');
+  errEl.classList.remove('show');
+  btn.innerHTML = '<span class="spinner"></span>';
+  btn.disabled  = true;
+  try {
+    const { error } = await db.auth.signInWithPassword({ email, password: pass });
+    if (error) {
+      errEl.textContent = mensajeErrorAuth(error);
+      errEl.classList.add('show');
+    }
+  } finally {
+    resetLoginButton();
+  }
+}
+
+function doLogout() {
+  cancelarInitCarga = true;
+  limpiarWatchdogConectando();
+  currentUser = null;
+  trabajadoraRow = null;
+  clienteBaseId = null;
+  horasClienteBase = null;
+  allServicios = [];
+  showView('login');
+  arranqueAuthResuelto = false;
+  limpiarSesionLocalSupabase();
+  setTimeout(function () {
+    db.auth.signOut({ scope: 'local' }).catch(function () {});
+    db.auth.signOut().catch(function () {});
+  }, 0);
+}
+
+/* ─────────────────────────────────────────────────
+   INIT
+───────────────────────────────────────────────── */
+async function initApp(user) {
+  if (initAppPromise) return initAppPromise;
+  initAppPromise = (async function () {
+    try {
+      await initAppBody(user);
+    } finally {
+      initAppPromise = null;
+    }
+  })();
+  return initAppPromise;
+}
+
+async function initAppBody(user) {
+  const appActiva = document.getElementById('view-app') && document.getElementById('view-app').classList.contains('active');
+  if (currentUser && currentUser.id === user.id && trabajadoraRow && appActiva) {
+    aplicarNombreTopbar(user);
+    return;
+  }
+  cancelarInitCarga = false;
+  limpiarWatchdogConectando();
+  showView('app');
+  currentUser = user;
+  document.getElementById('topbar-name').textContent = 'Conectando…';
+  conectandoWatchdog = setTimeout(function () {
+    conectandoWatchdog = null;
+    var el = document.getElementById('topbar-name');
+    if (!el || el.textContent.indexOf('Conectando') === -1) return;
+    cancelarInitCarga = true;
+    limpiarWatchdogConectando();
+    resetLoginButton();
+    var errEl = document.getElementById('login-error');
+    errEl.textContent = 'La carga no terminó. Inicia sesión de nuevo para cargar la información.';
+    errEl.classList.add('show');
+    currentUser = null;
+    trabajadoraRow = null;
+    clienteBaseId = null;
+    horasClienteBase = null;
+    allServicios = [];
+    showView('login');
+    arranqueAuthResuelto = false;
+    limpiarSesionLocalSupabase();
+    setTimeout(function () {
+      db.auth.signOut({ scope: 'local' }).catch(function () {});
+    }, 0);
+  }, 12000);
+  const emailBusca = (user.email || '').trim().toLowerCase();
+  const emailAlt   = (user.email || '').trim();
+  const tQuery = 6000;
+  let rows;
+  try {
+    const r1 = await conTimeout(db.from(T_TRABAJADORAS).select('*').eq(C_TRAB_EMAIL, emailBusca).limit(1), tQuery);
+    if (cancelarInitCarga) return;
+    if (r1.error) throw r1.error;
+    rows = r1.data;
+    if (!rows || !rows.length) {
+      const r2 = await conTimeout(db.from(T_TRABAJADORAS).select('*').eq(C_TRAB_EMAIL, emailAlt).limit(1), tQuery);
+      if (cancelarInitCarga) return;
+      if (r2.error) throw r2.error;
+      rows = r2.data;
+    }
+  } catch (e) {
+    if (cancelarInitCarga) return;
+    limpiarWatchdogConectando();
+    await db.auth.signOut();
+    const errEl = document.getElementById('login-error');
+    errEl.textContent = (e && e.message === 'timeout')
+      ? 'Sin respuesta al cargar tu perfil. Revisa la conexión e inténtalo de nuevo.'
+      : 'No se pudo cargar tu perfil. Revisa la conexión o contacta a coordinación.';
+    errEl.classList.add('show');
+    resetLoginButton();
+    showView('login');
+    return;
+  }
+  if (cancelarInitCarga) return;
+  trabajadoraRow = rows && rows[0] ? rows[0] : null;
+  if (!trabajadoraRow) {
+    limpiarWatchdogConectando();
+    await db.auth.signOut();
+    const errEl = document.getElementById('login-error');
+    errEl.textContent = 'Tu cuenta no está vinculada a una trabajadora. Contacta a coordinación.';
+    errEl.classList.add('show');
+    resetLoginButton();
+    showView('login');
+    return;
+  }
+  if (cancelarInitCarga) return;
+  resetLoginButton();
+  aplicarNombreTopbar(user);
+  limpiarWatchdogConectando();
+  try {
+    await conTimeout(loadServicios(), 15000);
+    if (cancelarInitCarga) return;
+    renderSection();
+  } catch (e) {
+    if (cancelarInitCarga) return;
+    allServicios = [];
+    resetLoginButton();
+    renderSection();
+    if (e && e.message === 'timeout') {
+      toast('Sin respuesta al cargar la agenda. Revisa la conexión y recarga.');
+    } else {
+      var det = (e && e.message) ? e.message : (e && e.code) ? String(e.code) : '';
+      var hint = det ? (' Detalle: ' + det) : '';
+      toast('No se pudieron cargar los servicios.' + hint + ' Revisa conexión, permisos en la tabla servicios y que existan filas con tu worker_id.');
+    }
+  }
+}
+
+/* ─────────────────────────────────────────────────
+   CARGAR SERVICIOS
+───────────────────────────────────────────────── */
+function queryServiciosBase(trabId, desdeStr, hastaStr, columnasSelect) {
+  var cols = columnasSelect || '*';
+  var w = coercerIdServicio(trabId);
+  return db
+    .from(T_SERVICIOS)
+    .select(cols)
+    .eq(C_TRABAJADORA_ID, w)
+    .gte('date', desdeStr)
+    .lte('date', hastaStr)
+    .order('date', { ascending: true })
+    .order('time', { ascending: true });
+}
+
+async function loadServicios() {
+  if (!trabajadoraRow) return;
+  const trabId = workerIdSesion();
+  if (trabId == null) return;
+  try { await loadClienteBase(); } catch (e) {}
+  const desde  = new Date(); desde.setDate(desde.getDate() - 2);
+  const hasta  = new Date(); hasta.setDate(hasta.getDate() + 14);
+  const desdeStr = desde.toISOString().split('T')[0];
+  const hastaStr = hasta.toISOString().split('T')[0];
+  let { data, error } = await queryServiciosBase(trabId, desdeStr, hastaStr, SELECT_SERVICIOS_CLIENTE);
+  if (error)
+    ({ data, error } = await queryServiciosBase(trabId, desdeStr, hastaStr, '*'));
+  if (error) {
+    allServicios = [];
+    var errObj = error;
+    if (typeof errObj === 'object' && errObj !== null && errObj.message) throw errObj;
+    throw new Error(typeof errObj === 'string' ? errObj : 'load_servicios');
+  }
+  allServicios = (data || [])
+    .map(normalizarServicio)
+    .filter(function (s) { return s[C_TRABAJADORA_ID] == trabId; });
+}
+
+/* ─────────────────────────────────────────────────
+   RENDER
+───────────────────────────────────────────────── */
+function renderSection() {
+  if (currentSection === 'agenda')  renderAgenda();
+  if (currentSection === 'perfil')  renderPerfil();
+  if (currentSection === 'modulos') renderModulos();
+}
+
+function renderAgenda() {
+  const content  = document.getElementById('main-content');
+  const filtered = aplicarReglaFijoBase(filterByTab(allServicios, currentTab));
+  var fijoHint = '';
+  if (esTrabajadoraFija() && clienteBaseId != null) {
+    var hb = Number(horasClienteBase);
+    if (hb === 40)
+      fijoHint = '<div class="fijo-hint">Contrato fijo (40 h/semana): el cliente base solo se muestra de lunes a viernes.</div>';
+    else if (hb === 44)
+      fijoHint = '<div class="fijo-hint">Contrato fijo (44 h/semana): el cliente base se muestra de lunes a sábado.</div>';
+  }
+  if (!filtered.length) {
+    content.innerHTML = fijoHint + `<div class="empty">
+      <div class="empty-icon">📅</div>
+      <div class="empty-text">No tienes servicios<br>programados para este período.</div>
+    </div>`; return;
+  }
+  let banner = '';
+  if (currentTab === 'manana') {
+    const sinConfirmar = filtered.filter(s => !s[C_CONFIRMADA]);
+    if (sinConfirmar.length)
+      banner = `<div class="confirm-banner">
+        <div class="confirm-banner-icon">🔔</div>
+        <div class="confirm-banner-text">
+          Tienes <strong>${sinConfirmar.length} servicio(s)</strong> sin confirmar para mañana. Presiona "Confirmar" en cada uno.
+        </div>
+      </div>`;
+  }
+  content.innerHTML = fijoHint + banner + filtered.map(s => renderSvcCard(s)).join('');
+}
+
+function filterByTab(servicios, tab) {
+  const hoy     = new Date();
+  const hoyStr  = hoy.toISOString().split('T')[0];
+  const man     = new Date(hoy); man.setDate(hoy.getDate()+1);
+  const manStr  = man.toISOString().split('T')[0];
+  const en7     = new Date(hoy); en7.setDate(hoy.getDate()+7);
+  return servicios.filter(s => {
+    const ds = s.date; // YYYY-MM-DD en BD
+    if (!ds) return false;
+    if (tab === 'hoy')    return ds === hoyStr;
+    if (tab === 'manana') return ds === manStr;
+    if (tab === 'semana') {
+      const d = new Date(s[C_FECHA]);
+      return d >= d0Dia(hoy) && d <= finDia(en7);
+    }
+    return true;
+  });
+}
+function d0Dia(d) { const x = new Date(d); x.setHours(0,0,0,0); return x; }
+function finDia(d) { const x = new Date(d); x.setHours(23,59,59,999); return x; }
+
+/** Texto secundario desde fila clientes (client_id → clientes). */
+function lineaClienteCtx(s) {
+  var p = [];
+  if (s.cliente_type) p.push(s.cliente_type);
+  if (s.cliente_segment) p.push(s.cliente_segment);
+  if (s.cliente_phone) p.push('☎ ' + s.cliente_phone);
+  if (s.cliente_email) p.push(s.cliente_email);
+  if (s.cliente_estado) p.push(s.cliente_estado);
+  return p.join(' · ');
+}
+
+function escapeHtml(str) {
+  if (str == null || str === '') return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function renderSvcCard(s) {
+  const dt     = new Date(s[C_FECHA]);
+  const hora   = dt.toLocaleTimeString('es', { hour:'2-digit', minute:'2-digit' });
+  const fecha  = dt.toLocaleDateString('es', { weekday:'long', day:'numeric', month:'long' });
+  const nombre = (s[C_NOMBRE_CLI] && String(s[C_NOMBRE_CLI]).trim()) ? s[C_NOMBRE_CLI] : 'Sin nombre de cliente';
+  const plan   = s[C_PLAN] || '';
+  const dir    = s[C_DIRECCION] || 'Sin dirección';
+  const progIni = s.hora_prog_inicio || '—';
+  const progFin = s.hora_prog_fin || '—';
+  const metaCli = lineaClienteCtx(s);
+  const mapUrl = `https://maps.google.com/?q=${encodeURIComponent(dir)}`;
+  const estado = getEstado(s);
+  const { label, cls } = badgeInfo(estado);
+
+  const tsEnt = s[C_REP_INICIO]
+    ? `<div class="ts-chip"><div class="ts-label">Entrada</div><div class="ts-value">${fmtTime(s[C_REP_INICIO])}</div></div>`
+    : `<div class="ts-chip"><div class="ts-label">Entrada</div><div class="ts-value" style="color:var(--muted)">—</div></div>`;
+  const tsSal = s[C_REP_FIN]
+    ? `<div class="ts-chip"><div class="ts-label">Salida</div><div class="ts-value">${fmtTime(s[C_REP_FIN])}</div></div>`
+    : `<div class="ts-chip"><div class="ts-label">Salida</div><div class="ts-value" style="color:var(--muted)">—</div></div>`;
+
+  let acciones = '';
+  if (estado === 'pendiente')
+    acciones = `<button class="btn btn-ghost" onclick="confirmarServicio('${s.id}')">✓ Confirmar</button>
+                <button class="btn btn-primary" onclick="abrirServicio('${s.id}')">Ver detalle →</button>`;
+  else if (estado === 'confirmado')
+    acciones = `<button class="btn btn-green" onclick="registrarEntrada('${s.id}')">📍 Registrar entrada</button>
+                <button class="btn btn-ghost" onclick="abrirServicio('${s.id}')">Ver</button>`;
+  else if (estado === 'iniciado')
+    acciones = `<button class="btn btn-red" onclick="registrarSalida('${s.id}')">🏁 Registrar salida</button>
+                <button class="btn btn-ghost" onclick="abrirServicio('${s.id}')">Ver</button>`;
+  else
+    acciones = `<button class="btn btn-ghost btn-full" onclick="abrirServicio('${s.id}')">Ver resumen</button>`;
+
+  return `<div class="card" id="card-${s.id}">
+    <div class="svc-header">
+      <div><div class="svc-time">${hora}</div><div class="svc-date">${capitalize(fecha)}</div></div>
+      <div class="badge ${cls}">${label}</div>
+    </div>
+    <div class="svc-client">${nombre}</div>
+    ${metaCli ? `<div class="svc-cliente-meta">${escapeHtml(metaCli)}</div>` : ''}
+    <div class="svc-prog">Inicio programado: ${progIni} · Fin programado: ${progFin}</div>
+    <div class="svc-plan">${plan}</div>
+    <a class="svc-addr" href="${mapUrl}" target="_blank">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+        <circle cx="12" cy="9" r="2.5"/>
+      </svg>
+      <span>${dir}</span>
+      <span class="maps-label">Maps →</span>
+    </a>
+    <div class="timestamps">${tsEnt}${tsSal}</div>
+    <div class="svc-actions">${acciones}</div>
+  </div>`;
+}
+
+function getEstado(s) {
+  if (s[C_REP_FIN] || s[C_STATUS] === 'Finalizado' || s[C_STATUS] === 'Completado') return 'completado';
+  if (s[C_REP_INICIO] || s[C_STATUS] === 'Iniciado') return 'iniciado';
+  if (s[C_STATUS] === 'Confirmado' || s[C_CONFIRMADA]) return 'confirmado';
+  return 'pendiente';
+}
+function badgeInfo(estado) {
+  return {
+    pendiente:  { label:'Pendiente',  cls:'badge-pending'  },
+    confirmado: { label:'Confirmado', cls:'badge-confirmed'},
+    iniciado:   { label:'Iniciado',    cls:'badge-ongoing'  },
+    completado: { label:'Finalizado', cls:'badge-done'     },
+  }[estado] || { label: estado, cls:'' };
+}
+
+/* ─────────────────────────────────────────────────
+   ACCIONES
+───────────────────────────────────────────────── */
+async function confirmarServicio(id) {
+  const wid = workerIdSesion();
+  if (wid == null) return;
+  const payload = { [C_STATUS]: 'Confirmado' };
+  const { data, error } = await serviciosPatchOwn(wid, id, payload);
+  if (error) { toast('❌ ' + (error.message || 'Error al confirmar')); return; }
+  if (data && data.length) {
+    toast('✅ Servicio confirmado');
+    mergeServicioDesdeSupabase(id, data[0]);
+    renderAgenda();
+    return;
+  }
+  try { await loadServicios(); } catch (e) {}
+  var s = encontrarServicioLocal(id);
+  var ok = s && s[C_STATUS] === 'Confirmado';
+  if (ok) {
+    toast('✅ Servicio confirmado');
+    renderAgenda();
+  } else {
+    toastPatchSinFilas('Confirmar');
+  }
+}
+
+async function registrarEntrada(id) {
+  getGPS(async (lat, lon, err) => {
+    if (err) { toast('📍 Activa el GPS para registrar entrada'); return; }
+    const svc = encontrarServicioLocal(id);
+    if (!svc) { toast('No se encontró el servicio. Recarga la agenda.'); return; }
+    const valido = await validarUbicacion(lat, lon, svc[C_DIRECCION]);
+    if (!valido.ok) { showGPSModal('entrada', id, lat, lon, valido.distancia); return; }
+    await guardarEntrada(id, lat, lon);
+  });
+}
+async function guardarEntrada(id, lat, lon) {
+  const wid = workerIdSesion();
+  if (wid == null) return;
+  const svc = encontrarServicioLocal(id);
+  const ahoraDate = new Date();
+  if (esPuestoFijo() && svc) {
+    const rh = await registrarHorasPuestoFijoEntrada(wid, svc, ahoraDate);
+    if (rh.error) { toast('❌ ' + (rh.error.message || 'No se pudo guardar en registro_horas')); return; }
+  }
+  const ahora = ahoraDate.toISOString();
+  const upd = { [C_REP_INICIO]: ahora, [C_STATUS]: 'Iniciado' };
+  const { data, error } = await serviciosPatchOwn(wid, id, upd);
+  if (error) { toast('❌ ' + (error.message || 'Entrada')); return; }
+  if (data && data.length) {
+    toast('⏱️ Entrada registrada');
+    mergeServicioDesdeSupabase(id, data[0]);
+    renderAgenda();
+    return;
+  }
+  try { await loadServicios(); } catch (e) {}
+  var s = encontrarServicioLocal(id);
+  if (s && s[C_REP_INICIO]) {
+    toast('⏱️ Entrada registrada');
+    renderAgenda();
+  } else {
+    toastPatchSinFilas('Entrada GPS');
+  }
+}
+async function registrarSalida(id) {
+  getGPS(async (lat, lon, err) => {
+    if (err) { toast('📍 Activa el GPS para registrar salida'); return; }
+    const svc = encontrarServicioLocal(id);
+    if (!svc) { toast('No se encontró el servicio. Recarga la agenda.'); return; }
+    const valido = await validarUbicacion(lat, lon, svc[C_DIRECCION]);
+    if (!valido.ok) { showGPSModal('salida', id, lat, lon, valido.distancia); return; }
+    const wid = workerIdSesion();
+    if (wid == null) return;
+    const ahoraDate = new Date();
+    if (esPuestoFijo() && svc) {
+      const rh = await registrarHorasPuestoFijoSalida(wid, svc, ahoraDate);
+      if (rh.error) { toast('❌ ' + (rh.error.message || 'No se pudo guardar en registro_horas')); return; }
+    }
+    const ahora = ahoraDate.toISOString();
+    const upd = { [C_REP_FIN]: ahora, [C_STATUS]: 'Finalizado' };
+    const { data, error } = await serviciosPatchOwn(wid, id, upd);
+    if (error) { toast('❌ ' + (error.message || 'Salida')); return; }
+    if (data && data.length) {
+      toast('🏁 Salida registrada');
+      mergeServicioDesdeSupabase(id, data[0]);
+      renderAgenda();
+      return;
+    }
+    try { await loadServicios(); } catch (e) {}
+    var s = encontrarServicioLocal(id);
+    if (s && s[C_REP_FIN]) {
+      toast('🏁 Salida registrada');
+      renderAgenda();
+    } else {
+      toastPatchSinFilas('Salida GPS');
+    }
+  });
+}
+
+function abrirServicio(id) {
+  const s = encontrarServicioLocal(id);
+  if (!s) { toast('Servicio no disponible. Recarga la agenda.'); return; }
+  const dt     = new Date(s[C_FECHA]);
+  const dir    = s[C_DIRECCION] || 'Sin dirección';
+  const mapUrl = `https://maps.google.com/?q=${encodeURIComponent(dir)}`;
+  const estado = getEstado(s);
+  const { label, cls } = badgeInfo(estado);
+  document.getElementById('modal-title').textContent = (s[C_NOMBRE_CLI] && String(s[C_NOMBRE_CLI]).trim()) ? s[C_NOMBRE_CLI] : 'Servicio';
+  document.getElementById('modal-sub').textContent =
+    capitalize(dt.toLocaleDateString('es',{weekday:'long',day:'numeric',month:'long'})) +
+    ' — ' + dt.toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit'});
+  const metaCliModal = lineaClienteCtx(s);
+  const idPart = s[C_CLIENT_ID] != null ? 'Cliente #' + escapeHtml(String(s[C_CLIENT_ID])) : '';
+  const nitPart = s.cliente_nit ? (idPart ? ' · ' : '') + 'NIT ' + escapeHtml(s.cliente_nit) : '';
+  const idNitHtml = (idPart || nitPart)
+    ? `<div style="font-size:0.88rem;color:var(--muted);line-height:1.5;margin-bottom:10px">${idPart}${nitPart}</div>`
+    : '';
+  document.getElementById('modal-body').innerHTML = `
+    <div class="badge ${cls}" style="margin-bottom:14px">${label}</div>
+    ${idNitHtml}
+    ${metaCliModal ? '<div class="svc-cliente-meta" style="margin-bottom:10px">' + escapeHtml(metaCliModal) + '</div>' : ''}
+    <div class="svc-prog" style="margin-bottom:10px">Inicio programado: ${s.hora_prog_inicio || '—'} · Fin programado: ${s.hora_prog_fin || '—'}</div>
+    <div class="svc-plan" style="margin-bottom:12px">${escapeHtml(s[C_PLAN]||'')}</div>
+    <a class="svc-addr" href="${mapUrl}" target="_blank" style="margin-bottom:6px">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+        <circle cx="12" cy="9" r="2.5"/>
+      </svg>
+      <span>${escapeHtml(dir)}</span><span class="maps-label">Abrir Maps →</span>
+    </a>
+    <div class="timestamps" style="margin-top:14px">
+      <div class="ts-chip"><div class="ts-label">Entrada</div><div class="ts-value">${s[C_REP_INICIO]?fmtFechaHora(s[C_REP_INICIO]):'—'}</div></div>
+      <div class="ts-chip"><div class="ts-label">Salida</div> <div class="ts-value">${s[C_REP_FIN]?fmtFechaHora(s[C_REP_FIN]):'—'}</div></div>
+    </div>`;
+  document.getElementById('modal-svc').classList.add('show');
+}
+function closeModal() { document.getElementById('modal-svc').classList.remove('show'); }
+document.getElementById('modal-svc').addEventListener('click', function(e){ if(e.target===this) closeModal(); });
+
+function showGPSModal(tipo, id, lat, lon, distancia) {
+  document.getElementById('modal-title').textContent = '📍 Verificar ubicación';
+  document.getElementById('modal-sub').textContent   = '';
+  document.getElementById('modal-body').innerHTML = `
+    <div class="gps-fail" style="margin-bottom:14px">
+      <div class="gps-dot"></div>
+      Estás a ${Math.round(distancia)}m del cliente (máx. ${GPS_RADIO_M}m)
+    </div>
+    <p style="font-size:0.85rem;color:var(--muted);line-height:1.6;margin-bottom:20px;font-weight:600">
+      Tu ubicación no coincide con la dirección del servicio.<br>¿Confirmas que ya estás en el lugar?
+    </p>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="closeModal();${tipo==='entrada'?`guardarEntrada('${id}',${lat},${lon})`:`forzarSalida('${id}',${lat},${lon})`}">
+        Sí, registrar
+      </button>
+    </div>`;
+  document.getElementById('modal-svc').classList.add('show');
+}
+async function forzarSalida(id, lat, lon) {
+  const wid = workerIdSesion();
+  if (wid == null) return;
+  const svc = encontrarServicioLocal(id);
+  const ahoraDate = new Date();
+  if (esPuestoFijo() && svc) {
+    const rh = await registrarHorasPuestoFijoSalida(wid, svc, ahoraDate);
+    if (rh.error) { toast('❌ ' + (rh.error.message || 'No se pudo guardar en registro_horas')); return; }
+  }
+  const ahora = ahoraDate.toISOString();
+  const upd = { [C_REP_FIN]: ahora, [C_STATUS]: 'Finalizado' };
+  const { data, error } = await serviciosPatchOwn(wid, id, upd);
+  if (error) { toast('❌ ' + (error.message || 'Salida')); return; }
+  if (data && data.length) {
+    mergeServicioDesdeSupabase(id, data[0]);
+    toast('🏁 Salida registrada');
+    renderAgenda();
+    return;
+  }
+  try { await loadServicios(); } catch (e) {}
+  var s = encontrarServicioLocal(id);
+  if (s && s[C_REP_FIN]) {
+    toast('🏁 Salida registrada');
+    renderAgenda();
+  } else {
+    toastPatchSinFilas('Salida forzada');
+  }
+}
+
+/* ─────────────────────────────────────────────────
+   PERFIL
+───────────────────────────────────────────────── */
+function renderPerfil() {
+  const nombre      = trabajadoraRow?.[C_TRAB_NOMBRE] || currentUser?.email || '';
+  const email       = currentUser?.email || '';
+  const inicial     = nombre[0]?.toUpperCase() || '?';
+  const completados = allServicios.filter(s => s[C_REP_FIN]).length;
+  const pendientes  = allServicios.filter(s => !s[C_REP_FIN] && !s[C_REP_INICIO]).length;
+  const enCurso     = allServicios.filter(s => s[C_REP_INICIO] && !s[C_REP_FIN]).length;
+  document.getElementById('main-content').innerHTML = `
+    <div class="profile-card">
+      <div class="avatar">${inicial}</div>
+      <div class="profile-name">${nombre}</div>
+      <div class="profile-email">${email}</div>
+      <div class="stats-row">
+        <div class="stat-box"><div class="stat-num" style="color:var(--green)">${completados}</div><div class="stat-lbl">Completados</div></div>
+        <div class="stat-box"><div class="stat-num" style="color:#1e40af">${enCurso}</div><div class="stat-lbl">En curso</div></div>
+        <div class="stat-box"><div class="stat-num" style="color:#b45309">${pendientes}</div><div class="stat-lbl">Pendientes</div></div>
+      </div>
+    </div>
+    <div class="section-title">Cuenta</div>
+    <div class="card" style="cursor:pointer" onclick="doLogout()">
+      <div style="display:flex;align-items:center;gap:12px;color:var(--red)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
+          <polyline points="16 17 21 12 16 7"/>
+          <line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+        <span style="font-size:0.9rem;font-weight:700">Cerrar sesión</span>
+      </div>
+    </div>`;
+}
+
+/* ─────────────────────────────────────────────────
+   MÓDULOS
+───────────────────────────────────────────────── */
+function renderModulos() {
+  document.getElementById('main-content').innerHTML = `
+    <div class="section-title">Módulos activos</div>
+    <div class="modules-grid">
+      <div class="module-card active-mod" onclick="switchSection('agenda',document.getElementById('nav-agenda'))">
+        <div class="mod-icon">📅</div>
+        <div class="mod-label">Mi Agenda</div>
+        <div class="mod-sub">Servicios del día</div>
+      </div>
+      <div class="module-card active-mod" onclick="switchSection('perfil',document.getElementById('nav-perfil'))">
+        <div class="mod-icon">👤</div>
+        <div class="mod-label">Mi Perfil</div>
+        <div class="mod-sub">Estadísticas</div>
+      </div>
+    </div>
+    <div class="section-title" style="margin-top:28px">Próximamente</div>
+    <div class="modules-grid">
+      <div class="module-card coming"><div class="mod-icon">💰</div><div class="mod-label">Nómina</div><div class="mod-sub">Pagos y liquidaciones</div><div class="mod-pill">Próximamente</div></div>
+      <div class="module-card coming"><div class="mod-icon">📚</div><div class="mod-label">Capacitaciones</div><div class="mod-sub">Cursos y materiales</div><div class="mod-pill">Próximamente</div></div>
+      <div class="module-card coming"><div class="mod-icon">💬</div><div class="mod-label">Mensajes</div><div class="mod-sub">Con coordinadora</div><div class="mod-pill">Próximamente</div></div>
+      <div class="module-card coming"><div class="mod-icon">📊</div><div class="mod-label">Mi historial</div><div class="mod-sub">Servicios pasados</div><div class="mod-pill">Próximamente</div></div>
+    </div>`;
+}
+
+/* ─────────────────────────────────────────────────
+   NAVEGACIÓN
+───────────────────────────────────────────────── */
+function showTab(tab, el) {
+  currentTab = tab;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderAgenda();
+}
+function switchSection(sec, el) {
+  currentSection = sec;
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('tabs-bar').style.display = sec === 'agenda' ? 'flex' : 'none';
+  renderSection();
+}
+function showView(name) {
+  document.querySelectorAll('.view').forEach(function (v) { v.classList.remove('active'); });
+  var el = document.getElementById('view-' + name);
+  if (el) el.classList.add('active');
+}
+
+/* ─────────────────────────────────────────────────
+   GPS
+───────────────────────────────────────────────── */
+function getGPS(cb) {
+  if (!navigator.geolocation) { cb(null,null,'no_gps'); return; }
+  navigator.geolocation.getCurrentPosition(
+    pos => cb(pos.coords.latitude, pos.coords.longitude, null),
+    err => cb(null, null, err.message),
+    { enableHighAccuracy: true, timeout: 10000 }
+  );
+}
+async function validarUbicacion(lat, lon, direccion) {
+  try {
+    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(direccion)}&limit=1`;
+    const arr = await (await fetch(url,{headers:{'Accept-Language':'es'}})).json();
+    if (!arr.length) return { ok: true, distancia: 0 };
+    const dist = haversine(lat, lon, parseFloat(arr[0].lat), parseFloat(arr[0].lon));
+    return { ok: dist <= GPS_RADIO_M, distancia: dist };
+  } catch { return { ok: true, distancia: 0 }; }
+}
+function haversine(lat1,lon1,lat2,lon2) {
+  const R=6371000, dLat=(lat2-lat1)*Math.PI/180, dLon=(lon2-lon1)*Math.PI/180;
+  const a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+
+/* ─────────────────────────────────────────────────
+   HELPERS
+───────────────────────────────────────────────── */
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2800);
+}
+function fmtTime(iso) { return new Date(iso).toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit'}); }
+function fmtFechaHora(iso) {
+  const d = new Date(iso);
+  return d.toLocaleString('es',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+}
+function capitalize(s) { return s.charAt(0).toUpperCase()+s.slice(1); }
+function setTopbarDate() {
+  document.getElementById('topbar-date').textContent =
+    new Date().toLocaleDateString('es',{weekday:'long',day:'numeric',month:'long'});
+}
+function updateLocal(id, fields) {
+  const i = allServicios.findIndex(function (s) { return s.id == id || String(s.id) === String(id); });
+  if (i > -1) allServicios[i] = { ...allServicios[i], ...fields };
+}
+
+/** Sincroniza la tarjeta local con la fila que devuelve PostgREST tras el PATCH (status Iniciado/Finalizado/Confirmado, timestamptz). */
+function mergeServicioDesdeSupabase(id, row) {
+  if (!row) return;
+  var i = allServicios.findIndex(function (s) { return s.id == id || String(s.id) === String(id); });
+  if (i < 0) return;
+  var prev = allServicios[i];
+  var merged = Object.assign({}, prev, row);
+  allServicios[i] = normalizarServicio(merged);
+}
+
+/* ─────────────────────────────────────────────────
+   PWA SERVICE WORKER (solo http/https; file:// rompe CORS y el SW)
+───────────────────────────────────────────────── */
+if ('serviceWorker' in navigator && (location.protocol === 'http:' || location.protocol === 'https:')) {
+  const swCode = `const C='limman-v1';
+  self.addEventListener('install',e=>e.waitUntil(caches.open(C).then(c=>c.addAll(['./','./trabajadora-portal.html']))));
+  self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request))));`;
+  const blob = new Blob([swCode],{type:'application/javascript'});
+  navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(function(){});
+}
+</script>
+</body>
+ 
