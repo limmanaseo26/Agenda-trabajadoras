@@ -2,7 +2,7 @@
   "name": "L\u00cdMMAN | Portal Trabajadora",
   "short_name": "L\u00cdMMAN",
   "description": "Agenda y gesti\u00f3n de servicios para trabajadoras de L\u00cdMMAN",
-  "start_url": "./trabajadora-portal.html",
+  "start_url": "start_url": "/",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#eef1f5",
